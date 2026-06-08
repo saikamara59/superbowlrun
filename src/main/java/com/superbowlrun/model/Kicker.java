@@ -13,7 +13,7 @@ public record Kicker(
         int patMade,
         int patAtt,
         String source
-) {
+) implements Card {
 
     public String cardTitle() {
         return "%s — %d %s (K)".formatted(name, season, team);

@@ -25,7 +25,7 @@ public record Player(
         int receivingYards,
         int receivingTds,
         String source           // "nflverse" or "legends"
-) {
+) implements Card {
 
     /** Card headline, e.g. {@code "Barry Sanders — 1997 DET (RB)"}. */
     public String cardTitle() {

@@ -14,7 +14,7 @@ public record Defense(
         int passesDefended,
         int tacklesForLoss,
         String source
-) {
+) implements Card {
 
     public String cardTitle() {
         return "%d %s Defense".formatted(season, team);
