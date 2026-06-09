@@ -24,4 +24,13 @@ public class ProjectionService {
     public double superBowlProbability(double teamRating) {
         return 1.0 / (1.0 + Math.exp(-(teamRating - FIELD_STRENGTH) / SCALE));
     }
+
+    /** A short flavor verdict for a Super Bowl probability (0–1). */
+    public String verdict(double probability) {
+        if (probability >= 0.60) return "Dynasty material.";
+        if (probability >= 0.35) return "A real contender.";
+        if (probability >= 0.15) return "Wild-card hopeful.";
+        if (probability >= 0.05) return "Long shot.";
+        return "Rebuilding year.";
+    }
 }

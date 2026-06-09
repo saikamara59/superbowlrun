@@ -104,21 +104,13 @@ public class DraftGameRunner implements CommandLineRunner {
         double teamRating = rating.teamRating(roster);
         double prob = projection.superBowlProbability(teamRating);
         System.out.printf("%n  TEAM RATING: %.1f / 99%n", teamRating);
-        System.out.printf("  SUPER BOWL CHANCE: %.1f%%   %s%n", prob * 100, verdict(prob));
+        System.out.printf("  SUPER BOWL CHANCE: %.1f%%   %s%n", prob * 100, projection.verdict(prob));
 
         System.out.println("\n----- shareable -----");
         System.out.printf("My all-time team: Team Rating %.1f, %.1f%% to win the Super Bowl%n", teamRating, prob * 100);
         for (int i = 0; i < roster.size(); i++) {
             System.out.printf("  %s: %s%n", slots.get(i).name(), roster.get(i).cardTitle());
         }
-    }
-
-    private String verdict(double prob) {
-        if (prob >= 0.60) return "Dynasty material.";
-        if (prob >= 0.35) return "A real contender.";
-        if (prob >= 0.15) return "Wild-card hopeful.";
-        if (prob >= 0.05) return "Long shot.";
-        return "Rebuilding year.";
     }
 
     private long parseLongOr(String s, long fallback) {
