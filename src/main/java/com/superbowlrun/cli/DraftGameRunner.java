@@ -1,6 +1,5 @@
 package com.superbowlrun.cli;
 
-import com.superbowlrun.data.DataLoader;
 import com.superbowlrun.draft.DraftService;
 import com.superbowlrun.draft.SlotType;
 import com.superbowlrun.model.Card;
@@ -22,20 +21,27 @@ import java.util.Scanner;
  * does the real work; this class just deals, reads your pick, and prints the result.
  */
 @Component
-@Profile("!test")  // don't launch the interactive game during tests (it would block on stdin)
+@Profile("cli")  // only launches the terminal game when the "cli" profile is active (not the web server / tests)
 public class DraftGameRunner implements CommandLineRunner {
 
     private static final int BATCH = DraftService.DEFAULT_BATCH_SIZE;
+
+    private final DraftService draft;
+    private final RatingService rating;
+    private final ProjectionService projection;
+
+    // Spring injects the shared engine beans here (constructor injection).
+    public DraftGameRunner(DraftService draft, RatingService rating, ProjectionService projection) {
+        this.draft = draft;
+        this.rating = rating;
+        this.projection = projection;
+    }
 
     @Override
     public void run(String... args) {
         // A random seed each play (every run is different); pass a number as an arg to replay a deal.
         long seed = args.length > 0 ? parseLongOr(args[0], new Random().nextLong()) : new Random().nextLong();
-
-        DataLoader loader = new DataLoader();
-        DraftService draft = new DraftService(loader, seed);
-        RatingService rating = new RatingService(loader);
-        ProjectionService projection = new ProjectionService();
+        Random rng = new Random(seed);
         Scanner scanner = new Scanner(System.in);
 
         System.out.println();
@@ -49,7 +55,7 @@ public class DraftGameRunner implements CommandLineRunner {
         List<SlotType> slots = DraftService.ROSTER;
         for (int i = 0; i < slots.size(); i++) {
             SlotType slot = slots.get(i);
-            List<Card> batch = draft.deal(slot, BATCH);
+            List<Card> batch = draft.deal(slot, BATCH, rng);
 
             System.out.printf("%n── Slot %d/%d: %s ──────────────────────────%n", i + 1, slots.size(), slot.label());
             for (int n = 0; n < batch.size(); n++) {

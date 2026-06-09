@@ -3,6 +3,7 @@ package com.superbowlrun.draft;
 import com.superbowlrun.data.DataLoader;
 import com.superbowlrun.model.Card;
 import com.superbowlrun.model.Player;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -11,14 +12,15 @@ import java.util.Random;
 import java.util.Set;
 
 /**
- * The presentation-agnostic game engine for the draft. Knows nothing about terminals or web —
- * it just holds the card pools and {@link #deal(SlotType, int) deals} a random batch of eligible
- * cards for a slot. A terminal driver or a web controller orchestrates the loop and collects picks.
+ * The presentation-agnostic game engine for the draft. A stateless Spring {@code @Service}: it
+ * holds the shared card pools and {@link #deal(SlotType, int, Random) deals} a random batch of
+ * eligible cards for a slot. The randomness lives <em>outside</em> the service — each draft passes
+ * in its own {@link Random}, so a single shared engine can run many independent, seeded drafts.
  *
- * <p>Dealing is seeded ({@link Random}) so a given seed reproduces the same draft. Cards are dealt
- * <em>with replacement across batches</em> (the same card can resurface in a later slot) but are
- * de-duplicated <em>within</em> a single batch (you won't see the same card twice in one deal).
+ * <p>Cards are dealt <em>with replacement across batches</em> (the same card can resurface in a
+ * later slot) but de-duplicated <em>within</em> a single batch.
  */
+@Service
 public class DraftService {
 
     /** Default number of cards shown per slot. */
@@ -36,9 +38,8 @@ public class DraftService {
     private final List<Card> flex;
     private final List<Card> kickers;
     private final List<Card> defenses;
-    private final Random random;
 
-    public DraftService(DataLoader loader, long seed) {
+    public DraftService(DataLoader loader) {
         List<Player> offense = loader.loadOffense();
         this.qbs = byGroup(offense, "QB");
         this.rbs = byGroup(offense, "RB");
@@ -52,7 +53,6 @@ public class DraftService {
                 .toList());
         this.kickers = new ArrayList<>(loader.loadKickers());
         this.defenses = new ArrayList<>(loader.loadDefenses());
-        this.random = new Random(seed);
     }
 
     private static List<Card> byGroup(List<Player> offense, String group) {
@@ -62,7 +62,7 @@ public class DraftService {
     }
 
     /** Deal a batch of distinct, randomly chosen eligible cards for the given slot. */
-    public List<Card> deal(SlotType slot, int batchSize) {
+    public List<Card> deal(SlotType slot, int batchSize, Random random) {
         List<Card> pool = poolFor(slot);
         int n = Math.min(batchSize, pool.size());
         Set<Card> batch = new LinkedHashSet<>();

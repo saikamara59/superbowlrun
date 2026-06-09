@@ -35,6 +35,12 @@
 			<artifactId>spring-boot-starter</artifactId>
 		</dependency>
 
+		<!-- Web layer (M2): embedded server + @RestController + JSON. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
 		<!-- CSV parsing for the committed player-data snapshot (M1). -->
 		<dependency>
 			<groupId>com.opencsv</groupId>

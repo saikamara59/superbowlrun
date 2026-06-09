@@ -5,6 +5,7 @@ import com.opencsv.exceptions.CsvValidationException;
 import com.superbowlrun.model.Defense;
 import com.superbowlrun.model.Kicker;
 import com.superbowlrun.model.Player;
+import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,10 +20,21 @@ import java.util.Map;
  * Loads the three committed data pools from the classpath (no network):
  * {@code offense.csv}, {@code kickers.csv}, {@code defenses.csv}. Each row becomes one
  * immutable card. The CSV-reading plumbing is shared in {@link #readRows(String)}.
+ *
+ * <p>A Spring {@code @Component}: one shared instance is created and injected wherever needed.
+ * Each pool is parsed at most once and cached, since several services share this bean.
  */
+@Component
 public class DataLoader {
 
-    public List<Player> loadOffense() {
+    private List<Player> offenseCache;
+    private List<Kicker> kickerCache;
+    private List<Defense> defenseCache;
+
+    public synchronized List<Player> loadOffense() {
+        if (offenseCache != null) {
+            return offenseCache;
+        }
         List<Player> out = new ArrayList<>();
         for (Map<String, String> r : readRows("/data/offense.csv")) {
             out.add(new Player(
@@ -33,10 +45,14 @@ public class DataLoader {
                     i(r, "receptions"), i(r, "receiving_yards"), i(r, "receiving_tds"),
                     r.get("source")));
         }
+        offenseCache = out;
         return out;
     }
 
-    public List<Kicker> loadKickers() {
+    public synchronized List<Kicker> loadKickers() {
+        if (kickerCache != null) {
+            return kickerCache;
+        }
         List<Kicker> out = new ArrayList<>();
         for (Map<String, String> r : readRows("/data/kickers.csv")) {
             out.add(new Kicker(
@@ -45,10 +61,14 @@ public class DataLoader {
                     i(r, "fg_made"), i(r, "fg_att"), i(r, "fg_long"),
                     i(r, "pat_made"), i(r, "pat_att"), r.get("source")));
         }
+        kickerCache = out;
         return out;
     }
 
-    public List<Defense> loadDefenses() {
+    public synchronized List<Defense> loadDefenses() {
+        if (defenseCache != null) {
+            return defenseCache;
+        }
         List<Defense> out = new ArrayList<>();
         for (Map<String, String> r : readRows("/data/defenses.csv")) {
             out.add(new Defense(
@@ -57,6 +77,7 @@ public class DataLoader {
                     i(r, "def_tds"), i(r, "def_safeties"), i(r, "def_pass_defended"),
                     i(r, "def_tackles_for_loss"), r.get("source")));
         }
+        defenseCache = out;
         return out;
     }
 

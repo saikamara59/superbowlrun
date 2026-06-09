@@ -1,5 +1,7 @@
 package com.superbowlrun.projection;
 
+import org.springframework.stereotype.Service;
+
 /**
  * Projects a team's Super Bowl chances from its 0–99 Team Rating.
  *
@@ -9,6 +11,7 @@ package com.superbowlrun.projection;
  * (the 50/50 point), and {@code SCALE} controls how sharply the odds swing with a rating gap.
  * Both are tunable. (M4 expands this into the full round-by-round playoff run.)
  */
+@Service
 public class ProjectionService {
 
     /** Team Rating at which a team is a coin-flip to win it all. */

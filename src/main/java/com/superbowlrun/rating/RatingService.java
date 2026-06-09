@@ -7,6 +7,7 @@ import com.superbowlrun.model.Card;
 import com.superbowlrun.model.Defense;
 import com.superbowlrun.model.Kicker;
 import com.superbowlrun.model.Player;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import java.util.Map;
  * <p>Position weights make some slots matter more than others (QB and defense win championships;
  * the kicker matters least). All weights are tunable here.
  */
+@Service
 public class RatingService {
 
     /** Tunable slot weights for the team rating. */
