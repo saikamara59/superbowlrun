@@ -67,6 +67,7 @@ public class RunController {
         // The result was computed and saved by the service when the draft completed.
         return new RunView(run.id(), run.isComplete(), slotNumber, slotLabel, batch, roster,
                 run.teamRating(), run.superBowlPct(), run.verdict(),
+                run.projection() == null ? null : run.projection().rounds(), run.playoffRun(),
                 run.savedTeamId(), run.isComplete() ? run.newPersonalBest() : null);
     }
 

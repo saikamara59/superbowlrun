@@ -1,6 +1,8 @@
 package com.superbowlrun.draft;
 
 import com.superbowlrun.model.Card;
+import com.superbowlrun.projection.PlayoffRun;
+import com.superbowlrun.projection.Projection;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,8 @@ public class DraftRun {
     private Double teamRating;
     private Double superBowlPct;
     private String verdict;
+    private Projection projection;
+    private PlayoffRun playoffRun;
     private Long savedTeamId;
     private boolean newPersonalBest;
 
@@ -79,10 +83,21 @@ public class DraftRun {
 
     // --- result, populated by the service when the draft completes ---
 
-    public void setResult(double teamRating, double superBowlPct, String verdict) {
+    public void setResult(double teamRating, double superBowlPct, String verdict,
+                          Projection projection, PlayoffRun playoffRun) {
         this.teamRating = teamRating;
         this.superBowlPct = superBowlPct;
         this.verdict = verdict;
+        this.projection = projection;
+        this.playoffRun = playoffRun;
+    }
+
+    public Projection projection() {
+        return projection;
+    }
+
+    public PlayoffRun playoffRun() {
+        return playoffRun;
     }
 
     public Double teamRating() {

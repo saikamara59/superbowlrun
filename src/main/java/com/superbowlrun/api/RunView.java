@@ -1,5 +1,8 @@
 package com.superbowlrun.api;
 
+import com.superbowlrun.projection.PlayoffRun;
+import com.superbowlrun.projection.RoundOdds;
+
 import java.util.List;
 
 /**
@@ -19,6 +22,8 @@ public record RunView(
         Double teamRating,         // null until complete
         Double superBowlPct,       // null until complete
         String verdict,            // null until complete
+        List<RoundOdds> playoffOdds, // per-round win odds, null until complete
+        PlayoffRun playoffRun,       // one simulated bracket run, null until complete
         Long savedTeamId,          // db id of the saved team, null until complete
         Boolean newPersonalBest    // true if this run set a new personal-best Super Bowl %
 ) {

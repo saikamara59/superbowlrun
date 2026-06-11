@@ -67,7 +67,7 @@ public class DraftGameRunner implements CommandLineRunner {
             System.out.println("   picked: " + pick.cardTitle());
         }
 
-        showResult(roster, rating, projection);
+        showResult(roster, seed);
     }
 
     /** Prompt until the player types a valid 1..max; if input ends, default to 1 (don't hang). */
@@ -91,7 +91,7 @@ public class DraftGameRunner implements CommandLineRunner {
         }
     }
 
-    private void showResult(List<Card> roster, RatingService rating, ProjectionService projection) {
+    private void showResult(List<Card> roster, long seed) {
         List<SlotType> slots = DraftService.ROSTER;
         System.out.println("\n==============================================");
         System.out.println("                 YOUR TEAM");
@@ -102,9 +102,26 @@ public class DraftGameRunner implements CommandLineRunner {
         }
 
         double teamRating = rating.teamRating(roster);
-        double prob = projection.superBowlProbability(teamRating);
+        var proj = projection.project(teamRating);
+        double prob = proj.superBowlProbability();
         System.out.printf("%n  TEAM RATING: %.1f / 99%n", teamRating);
-        System.out.printf("  SUPER BOWL CHANCE: %.1f%%   %s%n", prob * 100, projection.verdict(prob));
+
+        System.out.println("\n  PLAYOFF ODDS (field gets tougher each round):");
+        for (var r : proj.rounds()) {
+            System.out.printf("    %-26s %5.1f%%%n", r.round(), r.winProbability() * 100);
+        }
+        System.out.printf("    %-26s %5.1f%%   %s%n", ">> SUPER BOWL TITLE", prob * 100, projection.verdict(prob));
+
+        var run = projection.simulate(teamRating, seed);
+        System.out.println("\n  SIMULATED PLAYOFF RUN:");
+        for (var rr : run.results()) {
+            System.out.printf("    %-26s %s%n", rr.round(), rr.won() ? "WON" : "LOST");
+        }
+        if (run.champion()) {
+            System.out.println("    *** SUPER BOWL CHAMPIONS! ***");
+        } else {
+            System.out.println("    Eliminated in the " + run.eliminatedRound() + " round.");
+        }
 
         System.out.println("\n----- shareable -----");
         System.out.printf("My all-time team: Team Rating %.1f, %.1f%% to win the Super Bowl%n", teamRating, prob * 100);

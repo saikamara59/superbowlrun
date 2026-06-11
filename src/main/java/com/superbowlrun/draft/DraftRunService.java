@@ -83,10 +83,13 @@ public class DraftRunService {
     /** Score the finished roster, save it, and flag whether it's a new personal best. */
     private void finalizeRun(DraftRun run) {
         double teamRating = rating.teamRating(run.picks());
-        double probability = projection.superBowlProbability(teamRating);
+        com.superbowlrun.projection.Projection proj = projection.project(teamRating);
+        double probability = proj.superBowlProbability();
         double pct = probability * 100;
         String verdict = projection.verdict(probability);
-        run.setResult(teamRating, pct, verdict);
+        // Simulate one concrete playoff run, deterministic under the run's seed.
+        com.superbowlrun.projection.PlayoffRun playoff = projection.simulate(teamRating, run.seed());
+        run.setResult(teamRating, pct, verdict, proj, playoff);
 
         List<String> rosterLines = new ArrayList<>();
         for (int i = 0; i < run.picks().size(); i++) {
