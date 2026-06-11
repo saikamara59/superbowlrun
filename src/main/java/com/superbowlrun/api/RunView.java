@@ -18,6 +18,8 @@ public record RunView(
         List<RosterEntry> roster,  // picks so far
         Double teamRating,         // null until complete
         Double superBowlPct,       // null until complete
-        String verdict             // null until complete
+        String verdict,            // null until complete
+        Long savedTeamId,          // db id of the saved team, null until complete
+        Boolean newPersonalBest    // true if this run set a new personal-best Super Bowl %
 ) {
 }

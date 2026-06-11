@@ -1,6 +1,9 @@
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
+
+# H2 database file (M3) — anchored so it does NOT match src/main/resources/data
+/data/
 !**/src/main/**/target/
 !**/src/test/**/target/
 

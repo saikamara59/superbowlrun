@@ -20,6 +20,13 @@ public class DraftRun {
     private List<Card> currentBatch = List.of();
     private int slotIndex = 0;
 
+    // Result, set once the roster is complete.
+    private Double teamRating;
+    private Double superBowlPct;
+    private String verdict;
+    private Long savedTeamId;
+    private boolean newPersonalBest;
+
     public DraftRun(String id, long seed) {
         this.id = id;
         this.seed = seed;
@@ -69,4 +76,41 @@ public class DraftRun {
         picks.add(card);
         slotIndex++;
     }
+
+    // --- result, populated by the service when the draft completes ---
+
+    public void setResult(double teamRating, double superBowlPct, String verdict) {
+        this.teamRating = teamRating;
+        this.superBowlPct = superBowlPct;
+        this.verdict = verdict;
+    }
+
+    public Double teamRating() {
+        return teamRating;
+    }
+
+    public Double superBowlPct() {
+        return superBowlPct;
+    }
+
+    public String verdict() {
+        return verdict;
+    }
+
+    public void setSavedTeamId(Long savedTeamId) {
+        this.savedTeamId = savedTeamId;
+    }
+
+    public Long savedTeamId() {
+        return savedTeamId;
+    }
+
+    public void setNewPersonalBest(boolean newPersonalBest) {
+        this.newPersonalBest = newPersonalBest;
+    }
+
+    public boolean newPersonalBest() {
+        return newPersonalBest;
+    }
 }
+

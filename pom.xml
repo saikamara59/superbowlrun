@@ -41,6 +41,17 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
+		<!-- Persistence (M3): Spring Data JPA + H2 file database. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
 		<!-- CSV parsing for the committed player-data snapshot (M1). -->
 		<dependency>
 			<groupId>com.opencsv</groupId>
