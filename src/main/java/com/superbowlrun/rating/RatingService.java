@@ -15,12 +15,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Rates cards and rosters. M1 uses a <em>simple</em> model: each card gets a raw score from its
- * stat line, then is placed on a 0–99 scale by min–max normalization against everyone else at its
- * position. (M4 will replace this with fair, era-adjusted z-scores within each season + position.)
+ * Rates cards and rosters with an <em>era-adjusted</em> model (M4).
  *
- * <p>Position weights make some slots matter more than others (QB and defense win championships;
- * the kicker matters least). All weights are tunable here.
+ * <p>Each card gets a raw score from its stat line. For <b>modern</b> cards (1999+), the raw score
+ * is turned into a z-score <em>within its own season + position</em> — how many standard deviations
+ * above/below that season's peers — then mapped to a 0–99 OVR via {@code 50 + 15·z}. So a dominant
+ * 2003 back and a dominant 2023 back both rate high relative to their own eras, regardless of raw
+ * volume.
+ *
+ * <p>Pre-1999 <b>legends</b> have no season peers in the data, so they can't be z-scored honestly.
+ * They're curated greats by construction, so they're placed in an elite band (80–96), ranked by
+ * raw score among legends at their position. Position weights (QB/D-ST heaviest) are tunable.
  */
 @Service
 public class RatingService {
@@ -35,29 +40,56 @@ public class RatingService {
             SlotType.K, 0.4,
             SlotType.DST, 1.5);
 
-    /** group key -> {minRaw, maxRaw} across the whole pool, for normalization. */
-    private final Map<String, double[]> ranges = new HashMap<>();
+    private record Stats(double mean, double std, int n) {
+    }
+
+    /** Modern per-(group|season) distribution, for the era-adjusted z-score. */
+    private final Map<String, Stats> modernBySeason = new HashMap<>();
+    /** Modern per-group distribution, used as a fallback for sparse season buckets. */
+    private final Map<String, Stats> modernByGroup = new HashMap<>();
+    /** Sorted raw scores of legends per group, for elite-band ranking. */
+    private final Map<String, double[]> legendRaws = new HashMap<>();
 
     public RatingService(DataLoader loader) {
         List<Card> all = new ArrayList<>();
         all.addAll(loader.loadOffense());
         all.addAll(loader.loadKickers());
         all.addAll(loader.loadDefenses());
+
+        Map<String, List<Double>> bySeason = new HashMap<>();
+        Map<String, List<Double>> byGroup = new HashMap<>();
+        Map<String, List<Double>> legends = new HashMap<>();
         for (Card c : all) {
-            double[] mm = ranges.computeIfAbsent(groupKey(c),
-                    k -> new double[]{Double.MAX_VALUE, -Double.MAX_VALUE});
+            String group = groupKey(c);
             double r = raw(c);
-            mm[0] = Math.min(mm[0], r);
-            mm[1] = Math.max(mm[1], r);
+            if (isLegend(c)) {
+                legends.computeIfAbsent(group, k -> new ArrayList<>()).add(r);
+            } else {
+                bySeason.computeIfAbsent(group + "|" + season(c), k -> new ArrayList<>()).add(r);
+                byGroup.computeIfAbsent(group, k -> new ArrayList<>()).add(r);
+            }
         }
+        bySeason.forEach((k, v) -> modernBySeason.put(k, stats(v)));
+        byGroup.forEach((k, v) -> modernByGroup.put(k, stats(v)));
+        legends.forEach((k, v) -> legendRaws.put(k, v.stream().mapToDouble(Double::doubleValue).sorted().toArray()));
     }
 
-    /** Rate a single card on the 0–99 scale, relative to its position pool. */
+    /** Era-adjusted 0–99 rating for a single card. */
     public int rate(Card card) {
-        double[] mm = ranges.get(groupKey(card));
-        double span = mm[1] - mm[0];
-        double pct = span <= 0 ? 0.5 : (raw(card) - mm[0]) / span;
-        return (int) Math.round(clamp01(pct) * 99);
+        String group = groupKey(card);
+        double r = raw(card);
+        if (isLegend(card)) {
+            return legendOvr(group, r);
+        }
+        Stats s = modernBySeason.get(group + "|" + season(card));
+        if (s == null || s.std() <= 0 || s.n() < 3) {
+            s = modernByGroup.get(group); // fall back to all-seasons pooled for that position
+        }
+        if (s == null || s.std() <= 0) {
+            return 50;
+        }
+        double z = (r - s.mean()) / s.std();
+        return clampOvr(50 + 15 * z);
     }
 
     /** Weighted team rating (0–99) for a roster aligned to {@link DraftService#ROSTER}. */
@@ -72,13 +104,52 @@ public class RatingService {
         return weighted / weightSum;
     }
 
-    // --- raw stat-line scores (relative shape within a position; scale handled by normalization) ---
+    /** Place a legend in the elite band [80, 96] by raw rank among legends at its position. */
+    private int legendOvr(String group, double rawScore) {
+        double[] raws = legendRaws.get(group);
+        if (raws == null || raws.length == 0) {
+            return 88;
+        }
+        int below = 0;
+        for (double x : raws) {
+            if (x < rawScore) {
+                below++;
+            }
+        }
+        double percentile = raws.length == 1 ? 1.0 : (double) below / (raws.length - 1);
+        return (int) Math.round(80 + percentile * 16);
+    }
 
-    private double raw(Card c) {
+    private static Stats stats(List<Double> xs) {
+        int n = xs.size();
+        double mean = xs.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+        double variance = xs.stream().mapToDouble(d -> (d - mean) * (d - mean)).sum() / Math.max(1, n);
+        return new Stats(mean, Math.sqrt(variance), n);
+    }
+
+    private static int clampOvr(double v) {
+        return (int) Math.round(Math.max(1, Math.min(99, v)));
+    }
+
+    // --- card introspection (sealed Card -> exhaustive switches) ---
+
+    private boolean isLegend(Card c) {
+        return "legends".equals(sourceOf(c));
+    }
+
+    private String sourceOf(Card c) {
         return switch (c) {
-            case Player p -> rawPlayer(p);
-            case Kicker k -> rawKicker(k);
-            case Defense d -> rawDefense(d);
+            case Player p -> p.source();
+            case Kicker k -> k.source();
+            case Defense d -> d.source();
+        };
+    }
+
+    private int season(Card c) {
+        return switch (c) {
+            case Player p -> p.season();
+            case Kicker k -> k.season();
+            case Defense d -> d.season();
         };
     }
 
@@ -87,6 +158,16 @@ public class RatingService {
             case Player p -> p.positionGroup();
             case Kicker k -> "K";
             case Defense d -> "DST";
+        };
+    }
+
+    // --- raw stat-line scores (relative shape within a position; scale handled by normalization) ---
+
+    private double raw(Card c) {
+        return switch (c) {
+            case Player p -> rawPlayer(p);
+            case Kicker k -> rawKicker(k);
+            case Defense d -> rawDefense(d);
         };
     }
 
@@ -110,9 +191,5 @@ public class RatingService {
         double pointsPerGame = d.games() > 0 ? (double) d.pointsAllowed() / d.games() : 30;
         return (30 - pointsPerGame) * 4 + d.sacks() * 0.5 + d.interceptions()
                 + d.defensiveTds() * 3 + d.safeties() * 2 + d.passesDefended() * 0.2;
-    }
-
-    private static double clamp01(double x) {
-        return Math.max(0, Math.min(1, x));
     }
 }
