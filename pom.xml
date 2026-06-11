@@ -8,71 +8,58 @@
 		<version>3.5.14</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
+
 	<groupId>com.superbowlrun</groupId>
-	<artifactId>superbowlrun</artifactId>
+	<artifactId>superbowlrun-parent</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>superbowlrun</name>
-	<description>All-Time Team Builder: Super Bowl Run</description>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+	<packaging>pom</packaging>
+	<name>superbowlrun-parent</name>
+	<description>All-Time Team Builder: Super Bowl Run (modular monolith)</description>
+
+	<!--
+	  Modular monolith: one build, one deployable (the app module), but the code is split into
+	  modules with enforced dependency boundaries.
+	    model       <- pure domain records (no deps)
+	    engine      <- game logic: data load + draft + rating + projection (depends on model)
+	    persistence <- saved teams + personal best (JPA + H2; independent)
+	    app         <- Spring Boot main + REST API + CLI + run orchestration (depends on engine + persistence)
+	-->
+	<modules>
+		<module>model</module>
+		<module>engine</module>
+		<module>persistence</module>
+		<module>app</module>
+	</modules>
+
 	<properties>
 		<java.version>21</java.version>
 	</properties>
-	<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter</artifactId>
-		</dependency>
 
-		<!-- Web layer (M2): embedded server + @RestController + JSON. -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-
-		<!-- Persistence (M3): Spring Data JPA + H2 file database. -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-
-		<!-- CSV parsing for the committed player-data snapshot (M1). -->
-		<dependency>
-			<groupId>com.opencsv</groupId>
-			<artifactId>opencsv</artifactId>
-			<version>5.9</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-		</plugins>
-	</build>
+	<dependencyManagement>
+		<dependencies>
+			<!-- Internal module versions, so child POMs don't repeat the version. -->
+			<dependency>
+				<groupId>com.superbowlrun</groupId>
+				<artifactId>superbowlrun-model</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.superbowlrun</groupId>
+				<artifactId>superbowlrun-engine</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.superbowlrun</groupId>
+				<artifactId>superbowlrun-persistence</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<!-- Third-party versions not managed by Spring Boot's parent. -->
+			<dependency>
+				<groupId>com.opencsv</groupId>
+				<artifactId>opencsv</artifactId>
+				<version>5.9</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 </project>

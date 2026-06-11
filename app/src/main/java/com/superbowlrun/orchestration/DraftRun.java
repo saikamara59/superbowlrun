@@ -1,4 +1,6 @@
-package com.superbowlrun.draft;
+package com.superbowlrun.orchestration;
+import com.superbowlrun.draft.DraftService;
+import com.superbowlrun.draft.SlotType;
 
 import com.superbowlrun.model.Card;
 import com.superbowlrun.projection.PlayoffRun;

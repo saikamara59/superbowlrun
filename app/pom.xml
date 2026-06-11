@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.superbowlrun</groupId>
+		<artifactId>superbowlrun-parent</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>superbowlrun-app</artifactId>
+	<name>superbowlrun-app</name>
+	<description>The deployable: Spring Boot main, REST API, terminal game, and run orchestration wiring the engine to persistence.</description>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.superbowlrun</groupId>
+			<artifactId>superbowlrun-engine</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.superbowlrun</groupId>
+			<artifactId>superbowlrun-persistence</artifactId>
+		</dependency>
+
+		<!-- Web layer: embedded server + @RestController + JSON. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<!-- Only the app module is repackaged into the executable jar. -->
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>

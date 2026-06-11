@@ -37,7 +37,7 @@ Your **personal best** is saved across runs.
 **Web API** (default):
 
 ```bash
-./mvnw spring-boot:run        # starts an HTTP server on http://localhost:8080
+./mvnw -pl app spring-boot:run    # starts an HTTP server on http://localhost:8080
 ```
 
 ```bash
@@ -52,12 +52,12 @@ curl http://localhost:8080/api/best     # your personal-best team
 **Terminal game** (play with the keyboard):
 
 ```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=cli
+./mvnw -pl app spring-boot:run -Dspring-boot.run.profiles=cli
 # or from a built jar:
-./mvnw package && java -jar target/superbowlrun-0.0.1-SNAPSHOT.jar --spring.profiles.active=cli
+./mvnw package && java -jar app/target/superbowlrun-app-0.0.1-SNAPSHOT.jar --spring.profiles.active=cli
 ```
 
-**Tests:**
+**Tests** (builds and tests every module):
 
 ```bash
 ./mvnw test
@@ -79,24 +79,33 @@ While the server runs you can also browse the database at
 
 `{slot}` is one of `QB, RB, WR, TE, FLEX, K, DST`.
 
-## How it works
+## Project structure
 
-Clean separation of concerns: a presentation-agnostic **game engine** with both a terminal and a
-web face.
+A **modular monolith** — one build, one deployable, split into Maven modules with enforced
+dependency boundaries. A module can only use what it declares, so the engine literally *cannot*
+reach into web or database code.
 
-- **Data** (`data/`) — three committed CSV pools (offense, kickers, team defenses) loaded once at
-  startup. Fully offline; no runtime network calls.
-- **Engine** (`draft/`, `rating/`, `projection/`) — `DraftService` deals seeded random batches;
-  `RatingService` scores cards **era-adjusted** (z-score within each season + position, so a 2003
-  back and a 2023 back compare fairly; pre-1999 legends sit in an elite band); `ProjectionService`
-  turns the Team Rating into round-by-round odds via a logistic curve and a deterministic run.
-- **Web** (`api/`) — `@RestController`s over the engine, with DTOs and proper HTTP error codes.
-- **Persistence** (`persistence/`) — completed teams and the personal best, via Spring Data JPA + H2.
+```
+model/        pure domain records — the cards (Player / Kicker / Defense) and the Card interface
+engine/       game logic: data loading, draft, era-adjusted rating, playoff projection (no web, no DB)
+persistence/  saved teams + personal best (Spring Data JPA + H2; independent of the model)
+app/          Spring Boot main, REST API, terminal game, and the run orchestration wiring it together
+```
+
+Dependencies flow one way: `app → engine → model` and `app → persistence`. The engine is
+presentation-agnostic, so the same logic powers both the terminal and the web API.
+
+- **engine** — `DraftService` deals seeded random batches; `RatingService` scores cards
+  **era-adjusted** (z-score within each season + position, so a 2003 back and a 2023 back compare
+  fairly; pre-1999 legends sit in an elite band); `ProjectionService` turns the Team Rating into
+  round-by-round odds via a logistic curve plus a deterministic simulated run.
+- **app** — `@RestController`s and the CLI over the engine (DTOs, proper HTTP error codes), and the
+  `DraftRunService` that coordinates one run and saves the result.
 
 Draft, scoring, and projection are all **deterministic under a seed**, so any run is reproducible.
 
-See [`src/main/resources/data/README.md`](src/main/resources/data/README.md) for full data
-provenance, the column schemas, and which figures are curated/approximate.
+See [`engine/src/main/resources/data/README.md`](engine/src/main/resources/data/README.md) for full
+data provenance, the column schemas, and which figures are curated/approximate.
 
 ## Roadmap
 
