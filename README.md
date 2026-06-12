@@ -34,10 +34,17 @@ Your **personal best** is saved across runs.
 
 ## Run it
 
-**Web API** (default):
+First build all modules (a single reactor build):
 
 ```bash
-./mvnw -pl app spring-boot:run    # starts an HTTP server on http://localhost:8080
+./mvnw install        # builds + installs the modules locally (or just ./mvnw package)
+```
+
+**Web API** — run the assembled jar (self-contained, always works):
+
+```bash
+java -jar app/target/superbowlrun-app-0.0.1-SNAPSHOT.jar      # http://localhost:8080
+# dev iteration after `install`: ./mvnw -pl app spring-boot:run
 ```
 
 ```bash
@@ -49,12 +56,10 @@ curl -X POST http://localhost:8080/api/runs/<id>/picks \
 curl http://localhost:8080/api/best     # your personal-best team
 ```
 
-**Terminal game** (play with the keyboard):
+**Terminal game** (play with the keyboard — use the jar so input is forwarded cleanly):
 
 ```bash
-./mvnw -pl app spring-boot:run -Dspring-boot.run.profiles=cli
-# or from a built jar:
-./mvnw package && java -jar app/target/superbowlrun-app-0.0.1-SNAPSHOT.jar --spring.profiles.active=cli
+java -jar app/target/superbowlrun-app-0.0.1-SNAPSHOT.jar --spring.profiles.active=cli
 ```
 
 **Tests** (builds and tests every module):
