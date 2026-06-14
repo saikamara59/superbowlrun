@@ -71,6 +71,10 @@ java -jar app/target/superbowlrun-app-0.0.1-SNAPSHOT.jar --spring.profiles.activ
 While the server runs you can also browse the database at
 `http://localhost:8080/h2-console` (JDBC URL `jdbc:h2:file:./data/superbowlrun`, user `sa`, no password).
 
+**Web UI:** a React + TypeScript single-page frontend (Vite) lives in [`frontend/`](frontend/) —
+run the backend, then `cd frontend && npm install && npm run dev` (it proxies `/api` to `:8080`).
+See [`frontend/README.md`](frontend/README.md).
+
 ## API
 
 | Method & path | Purpose |
