@@ -15,8 +15,8 @@ class ProjectionServiceTest {
 
     @Test
     void winProbabilityIsOneHalfAtFieldStrength() {
-        // Wild Card field strength is 55, so a 55-rated team is a coin flip in round 1.
-        double wildCard = projection.project(55.0).rounds().get(0).winProbability();
+        // Wild Card field strength is 74, so a 74-rated team is a coin flip in round 1.
+        double wildCard = projection.project(74.0).rounds().get(0).winProbability();
         assertEquals(0.5, wildCard, 1e-9);
     }
 

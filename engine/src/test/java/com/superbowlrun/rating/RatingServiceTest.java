@@ -44,8 +44,8 @@ class RatingServiceTest {
     void anEliteSeasonRatesFarHigherThanAScrub() {
         int elite = rating.rate(qb(2018, 5000, 50, 5, "nflverse"));
         int scrub = rating.rate(qb(2018, 600, 2, 12, "nflverse"));
-        assertTrue(elite >= 80, "elite should be >= 80, was " + elite);
-        assertTrue(scrub <= 40, "scrub should be <= 40, was " + scrub);
+        assertTrue(elite >= 90, "elite should be >= 90, was " + elite);
+        assertTrue(scrub <= 62, "scrub should be <= 62, was " + scrub);
         assertTrue(elite > scrub);
     }
 
@@ -60,7 +60,7 @@ class RatingServiceTest {
     @Test
     void legendsLandInTheEliteBand() {
         int ovr = rating.rate(qb(1985, 4000, 30, 10, "legends"));
-        assertTrue(ovr >= 80 && ovr <= 96, "legend OVR should be 80..96, was " + ovr);
+        assertTrue(ovr >= 88 && ovr <= 99, "legend OVR should be in the elite band, was " + ovr);
     }
 
     @Test

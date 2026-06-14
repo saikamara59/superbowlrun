@@ -19,12 +19,12 @@ import java.util.Map;
  *
  * <p>Each card gets a raw score from its stat line. For <b>modern</b> cards (1999+), the raw score
  * is turned into a z-score <em>within its own season + position</em> — how many standard deviations
- * above/below that season's peers — then mapped to a 0–99 OVR via {@code 50 + 15·z}. So a dominant
- * 2003 back and a dominant 2023 back both rate high relative to their own eras, regardless of raw
- * volume.
+ * above/below that season's peers — then mapped onto a sports-game OVR via {@code 70 + 11·z}
+ * (floor 40): an average starter sits ~70, a +1.8σ season ~90, and all-time seasons 95–99. So a
+ * dominant 2003 back and a dominant 2023 back both rate high relative to their own eras.
  *
  * <p>Pre-1999 <b>legends</b> have no season peers in the data, so they can't be z-scored honestly.
- * They're curated greats by construction, so they're placed in an elite band (80–96), ranked by
+ * They're curated greats by construction, so they're placed in an elite band (92–99), ranked by
  * raw score among legends at their position. Position weights (QB/D-ST heaviest) are tunable.
  */
 @Service
@@ -86,10 +86,10 @@ public class RatingService {
             s = modernByGroup.get(group); // fall back to all-seasons pooled for that position
         }
         if (s == null || s.std() <= 0) {
-            return 50;
+            return 70;
         }
         double z = (r - s.mean()) / s.std();
-        return clampOvr(50 + 15 * z);
+        return clampOvr(70 + 11 * z);
     }
 
     /** Weighted team rating (0–99) for a roster aligned to {@link DraftService#ROSTER}. */
@@ -104,11 +104,11 @@ public class RatingService {
         return weighted / weightSum;
     }
 
-    /** Place a legend in the elite band [80, 96] by raw rank among legends at its position. */
+    /** Place a legend in the elite band [92, 99] by raw rank among legends at its position. */
     private int legendOvr(String group, double rawScore) {
         double[] raws = legendRaws.get(group);
         if (raws == null || raws.length == 0) {
-            return 88;
+            return 95;
         }
         int below = 0;
         for (double x : raws) {
@@ -117,7 +117,7 @@ public class RatingService {
             }
         }
         double percentile = raws.length == 1 ? 1.0 : (double) below / (raws.length - 1);
-        return (int) Math.round(80 + percentile * 16);
+        return (int) Math.round(92 + percentile * 7);
     }
 
     private static Stats stats(List<Double> xs) {
@@ -128,7 +128,7 @@ public class RatingService {
     }
 
     private static int clampOvr(double v) {
-        return (int) Math.round(Math.max(1, Math.min(99, v)));
+        return (int) Math.round(Math.max(40, Math.min(99, v)));
     }
 
     // --- card introspection (sealed Card -> exhaustive switches) ---

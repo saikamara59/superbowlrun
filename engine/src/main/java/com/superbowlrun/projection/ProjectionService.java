@@ -19,7 +19,7 @@ import java.util.Random;
 public class ProjectionService {
 
     /** Smaller = steeper (rating gaps swing the odds harder). Tunable. */
-    public static final double SCALE = 7.0;
+    public static final double SCALE = 5.1;
 
     /** Per-round odds and the overall (product) championship probability. */
     public Projection project(double teamRating) {
