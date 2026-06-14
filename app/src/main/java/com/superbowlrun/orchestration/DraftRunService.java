@@ -11,11 +11,12 @@ import com.superbowlrun.rating.RatingService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages the lifecycle of draft runs: start one, look one up, submit a pick. Holds in-progress
@@ -25,12 +26,24 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class DraftRunService {
 
+    /** Cap on retained in-progress runs; least-recently-used are evicted past this. */
+    private static final int MAX_RUNS = 1000;
+
     private final DraftService draft;
     private final RatingService rating;
     private final ProjectionService projection;
     private final SavedTeamService store;
-    // In-memory store of in-progress runs. (Grows for the life of the process; fine for M2.)
-    private final Map<String, DraftRun> runs = new ConcurrentHashMap<>();
+
+    // In-memory store of in-progress runs, bounded with LRU eviction so an unauthenticated flood of
+    // POST /api/runs can't exhaust memory. Access-order LinkedHashMap; synchronized for thread safety
+    // (access-order mutates on get, so reads must be guarded too). Completed teams live in the DB.
+    private final Map<String, DraftRun> runs = Collections.synchronizedMap(
+            new LinkedHashMap<>(16, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, DraftRun> eldest) {
+                    return size() > MAX_RUNS;
+                }
+            });
 
     public DraftRunService(DraftService draft, RatingService rating,
                            ProjectionService projection, SavedTeamService store) {
