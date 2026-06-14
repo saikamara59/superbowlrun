@@ -25,20 +25,21 @@ import java.util.Map;
  *
  * <p>Pre-1999 <b>legends</b> have no season peers in the data, so they can't be z-scored honestly.
  * They're curated greats by construction, so they're placed in an elite band (92–99), ranked by
- * raw score among legends at their position. Position weights (QB/D-ST heaviest) are tunable.
+ * raw score among legends at their position. Position weights are tunable; D/ST is weighted
+ * heaviest (defense wins championships), then QB.
  */
 @Service
 public class RatingService {
 
-    /** Tunable slot weights for the team rating. */
+    /** Tunable slot weights for the team rating. Defense wins championships — D/ST weighs most. */
     private static final Map<SlotType, Double> WEIGHTS = Map.of(
+            SlotType.DST, 2.2,
             SlotType.QB, 1.6,
             SlotType.RB, 1.0,
             SlotType.WR, 1.0,
             SlotType.TE, 0.7,
             SlotType.FLEX, 0.8,
-            SlotType.K, 0.4,
-            SlotType.DST, 1.5);
+            SlotType.K, 0.4);
 
     private record Stats(double mean, double std, int n) {
     }
