@@ -1,0 +1,38 @@
+# Render Blueprint — deploys the app (one Docker container serving the SPA + API) and a
+# managed PostgreSQL, wired together. In Render: New → Blueprint → pick this repo.
+# Free tier note: the web service spins down when idle, so the first request after a lull
+# cold-starts in ~30–60s.
+services:
+  - type: web
+    name: superbowlrun
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/teams
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_HOST
+        fromDatabase:
+          name: superbowlrun-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: superbowlrun-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: superbowlrun-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: superbowlrun-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: superbowlrun-db
+          property: password
+
+databases:
+  - name: superbowlrun-db
+    plan: free

@@ -118,6 +118,31 @@ Draft, scoring, and projection are all **deterministic under a seed**, so any ru
 See [`engine/src/main/resources/data/README.md`](engine/src/main/resources/data/README.md) for full
 data provenance, the column schemas, and which figures are curated/approximate.
 
+## Deploy (Render — one container)
+
+The whole app ships as a **single Docker image**: Spring Boot serves the API *and* the bundled React
+frontend at the same origin (so no CORS), backed by a managed **PostgreSQL**. A
+[`render.yaml`](render.yaml) blueprint wires it up.
+
+1. Push the repo to GitHub.
+2. In Render: **New → Blueprint**, pick this repo. It reads `render.yaml`, builds the
+   [`Dockerfile`](Dockerfile) (frontend build → bundled into the app → one jar), provisions a free
+   Postgres, and injects the DB connection.
+3. Open the service URL — API + frontend live on one domain.
+
+Config is environment-driven (no secrets in the repo): the `prod` profile reads the datasource from
+`DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD` (or `SPRING_DATASOURCE_URL`). On Render's free tier the
+service sleeps when idle, so the first request after a lull cold-starts in ~30–60s.
+
+Test the deployed shape locally (needs Docker):
+
+```bash
+docker compose up --build      # app + Postgres → http://localhost:8080
+```
+
+> Vercel note: Vercel can't run the JVM backend, so a Vercel deploy would be frontend-on-Vercel +
+> this backend on a container host. Render hosts all three (app, DB, static) in one place — simplest.
+
 ## Roadmap
 
 - Web frontend: card-based draft UI, animated batch reveal, a playoff-bracket result screen, a
