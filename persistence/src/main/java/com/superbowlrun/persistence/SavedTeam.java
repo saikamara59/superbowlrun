@@ -4,6 +4,7 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,7 +35,9 @@ public class SavedTeam {
     private double superBowlPct;
     private String verdict;
 
-    @ElementCollection
+    // Eager: the roster is small and always read with the team, and it must load without an open
+    // session (prod sets spring.jpa.open-in-view=false), so the controller can serialize it safely.
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "saved_team_roster", joinColumns = @JoinColumn(name = "team_id"))
     @OrderColumn(name = "slot_order")
     @Column(name = "line", length = 200)
